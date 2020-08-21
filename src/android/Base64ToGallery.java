@@ -2,6 +2,7 @@ package it.nexxa.base64ToGallery;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -70,7 +71,7 @@ public class Base64ToGallery extends CordovaPlugin {
       if (PermissionHelper.hasPermission(this, WRITE_EXTERNAL_STORAGE)) {
         Log.d("SaveImageGallery", "Permissions already granted, or Android version is lower than 6");
 
-        savePhoto(bmp, filePrefix, folder, this._callback);
+        savePhoto(bmp, fileName, folder, this._callback);
       } else {
         Log.d("SaveImageGallery", "Requesting permissions for WRITE_EXTERNAL_STORAGE");
         PermissionHelper.requestPermission(this, 1000, WRITE_EXTERNAL_STORAGE);
@@ -92,7 +93,7 @@ public class Base64ToGallery extends CordovaPlugin {
       File imageFile = new File(f, fileName);
       try {
           FileOutputStream fos = new FileOutputStream(imageFile);
-          bmp.compress(Bitmap.CompressFormat.PNG, 50, out);
+          bmp.compress(Bitmap.CompressFormat.PNG, 50, fos);
           fos.flush();
           fos.close();
       } catch (IOException e) {
