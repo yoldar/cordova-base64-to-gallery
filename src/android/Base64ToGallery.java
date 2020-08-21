@@ -46,9 +46,9 @@ public class Base64ToGallery extends CordovaPlugin {
       CallbackContext callbackContext) throws JSONException {
 
     String base64               = args.optString(0);
-    String fileName           = args.optString(1);
-    String folder           = args.optString(2);
-    boolean mediaScannerEnabled = args.optBoolean(3);
+    String fileName           = args.optString(2);
+    String folder           = args.optString(3);
+    boolean mediaScannerEnabled = args.optBoolean(1);
     this._callback = callbackContext;
     this._mediaScannerEnabled = mediaScannerEnabled;
     this._fileName = fileName;
@@ -91,14 +91,10 @@ public class Base64ToGallery extends CordovaPlugin {
 
       // create the file in which we will write the contents
       File imageFile = new File(f, fileName);
-      try {
-          FileOutputStream fos = new FileOutputStream(imageFile);
-          bmp.compress(Bitmap.CompressFormat.PNG, 50, fos);
-          fos.flush();
-          fos.close();
-      } catch (IOException e) {
-          e.printStackTrace();
-      }
+      FileOutputStream fos = new FileOutputStream(imageFile);
+      bmp.compress(Bitmap.CompressFormat.PNG, 50, fos);
+      fos.flush();
+      fos.close();
 
       if (imageFile == null) {
         callbackContext.error("Error while saving image");
