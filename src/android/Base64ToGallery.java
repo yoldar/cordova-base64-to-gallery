@@ -2,7 +2,6 @@ package it.nexxa.base64ToGallery;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Calendar;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
@@ -38,18 +37,21 @@ public class Base64ToGallery extends CordovaPlugin {
   public static final String EMPTY_STR = "";
   private CallbackContext _callback;
   private Bitmap _bmp;
-  private String _filePrefix;
+  private String _fileName;
+  private String _folder;
   private boolean _mediaScannerEnabled;
   @Override
   public boolean execute(String action, JSONArray args,
       CallbackContext callbackContext) throws JSONException {
 
     String base64               = args.optString(0);
-    String filePrefix           = args.optString(1);
-    boolean mediaScannerEnabled = args.optBoolean(2);
+    String fileName           = args.optString(1);
+    String folder           = args.optString(2);
+    boolean mediaScannerEnabled = args.optBoolean(3);
     this._callback = callbackContext;
     this._mediaScannerEnabled = mediaScannerEnabled;
-    this._filePrefix = filePrefix;
+    this._fileName = fileName;
+    this._folder = folder;
     // isEmpty() requires API level 9
     if (base64.equals(EMPTY_STR)) {
       callbackContext.error("Missing base64 string");
@@ -68,7 +70,7 @@ public class Base64ToGallery extends CordovaPlugin {
       if (PermissionHelper.hasPermission(this, WRITE_EXTERNAL_STORAGE)) {
         Log.d("SaveImageGallery", "Permissions already granted, or Android version is lower than 6");
 
-        savePhoto(bmp, filePrefix, this._callback);
+        savePhoto(bmp, filePrefix, folder, this._callback);
       } else {
         Log.d("SaveImageGallery", "Requesting permissions for WRITE_EXTERNAL_STORAGE");
         PermissionHelper.requestPermission(this, 1000, WRITE_EXTERNAL_STORAGE);
@@ -78,45 +80,24 @@ public class Base64ToGallery extends CordovaPlugin {
     return true;
   }
 
-  private void savePhoto(Bitmap bmp, String prefix ,CallbackContext callbackContext) {
+  private void savePhoto(Bitmap bmp, String fileName, String folder, CallbackContext callbackContext) {
 
     try {
-      String deviceVersion = Build.VERSION.RELEASE;
-      Calendar c           = Calendar.getInstance();
-      String date          = EMPTY_STR
-                              + c.get(Calendar.YEAR)
-                              + c.get(Calendar.MONTH)
-                              + c.get(Calendar.DAY_OF_MONTH)
-                              + c.get(Calendar.HOUR_OF_DAY)
-                              + c.get(Calendar.MINUTE)
-                              + c.get(Calendar.SECOND);
-
-      int check = deviceVersion.compareTo("2.3.3");
-
-      File folder;
-
-      /*
-       * File path = Environment.getExternalStoragePublicDirectory(
-       * Environment.DIRECTORY_PICTURES ); //this throws error in Android
-       * 2.2
-       */
-      if (check >= 1) {
-        folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-
-        if (!folder.exists()) {
-          folder.mkdirs();
-        }
-
-      } else {
-        folder = Environment.getExternalStorageDirectory();
+      File f = new File(Environment.getExternalStorageDirectory(), folder);
+      if (!f.exists()) {
+          f.mkdirs();
       }
 
-      File imageFile = new File(folder, prefix + ".png");
-
-      FileOutputStream out = new FileOutputStream(imageFile);
-      bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-      out.flush();
-      out.close();
+      // create the file in which we will write the contents
+      File imageFile = new File(f, fileName);
+      try {
+          FileOutputStream fos = new FileOutputStream(imageFile);
+          bmp.compress(Bitmap.CompressFormat.PNG, 50, out);
+          fos.flush();
+          fos.close();
+      } catch (IOException e) {
+          e.printStackTrace();
+      }
 
       if (imageFile == null) {
         callbackContext.error("Error while saving image");
@@ -128,8 +109,6 @@ public class Base64ToGallery extends CordovaPlugin {
       }
 
       callbackContext.success(imageFile.toString());
-
-
     } catch (Exception e) {
       Log.e("Base64ToGallery", "An exception occured while saving image: " + e.toString());
       callbackContext.error("An exception occured while saving image: " + e.toString());
@@ -162,7 +141,7 @@ public class Base64ToGallery extends CordovaPlugin {
     switch (requestCode) {
       case 1000:
         Log.d("SaveImageGallery", "User granted the permission for WRITE_EXTERNAL_STORAGE");
-        savePhoto(this._bmp, this._filePrefix, this._callback);
+        savePhoto(this._bmp, this._fileName, this._folder, this._callback);
         break;
     }
   }

@@ -1,6 +1,7 @@
 # Commons
 /node_modules
 *.log
+.history
 
 # OS
 .DS_Store
